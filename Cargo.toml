@@ -1,0 +1,14 @@
+[package]
+name = "type_switch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+
+[lints.rust]
+missing_docs = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(docsrs_dep)'] }
+unsafe_op_in_unsafe_fn = "warn"
+unused_qualifications = "warn"
+type_alias_bounds = "allow"
