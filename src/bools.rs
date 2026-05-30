@@ -53,6 +53,13 @@ pub unsafe trait Bool:
 /// This type is `T` when `B` is [`True`] and `F` when `B` is [`False`].
 pub type Switch<B: Bool, T, F> = B::Either<T, F>;
 
+/// This is equivalent to `T::VALUE` but is sometimes shorter to write.
+/// Ex, this is preferable to `<T as Bool>::VALUE`.
+#[inline(always)]
+pub const fn bool_of<T: Bool>() -> bool {
+    T::VALUE
+}
+
 /// The only type that implements [`Bool`].
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Cond<const COND: bool>;
