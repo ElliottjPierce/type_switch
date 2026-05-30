@@ -602,6 +602,7 @@ macro_rules! switch_new {
 }
 
 impl<B: Bool, T: Debug, F: Debug> Debug for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
             _ => Debug::fmt(this, f);
@@ -610,6 +611,7 @@ impl<B: Bool, T: Debug, F: Debug> Debug for SwitchCell<B, T, F> {
 }
 
 impl<B: Bool, T: Display, F: Display> Display for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
             _ => Display::fmt(this, f);
@@ -618,6 +620,7 @@ impl<B: Bool, T: Display, F: Display> Display for SwitchCell<B, T, F> {
 }
 
 impl<B: Bool, T: PartialEq, F: PartialEq> PartialEq for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         switch_match!(match (this = self, other) {
             _ => PartialEq::eq(this, other);
@@ -628,6 +631,7 @@ impl<B: Bool, T: PartialEq, F: PartialEq> PartialEq for SwitchCell<B, T, F> {
 impl<B: Bool, T: Eq, F: Eq> Eq for SwitchCell<B, T, F> {}
 
 impl<B: Bool, T: PartialOrd, F: PartialOrd> PartialOrd for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         switch_match!(match (this = self, other) {
             _ => PartialOrd::partial_cmp(this, other);
@@ -636,6 +640,7 @@ impl<B: Bool, T: PartialOrd, F: PartialOrd> PartialOrd for SwitchCell<B, T, F> {
 }
 
 impl<B: Bool, T: Ord, F: Ord> Ord for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         switch_match!(match (this = self, other) {
             _ => Ord::cmp(this, other);
@@ -644,6 +649,7 @@ impl<B: Bool, T: Ord, F: Ord> Ord for SwitchCell<B, T, F> {
 }
 
 impl<B: Bool, T: Hash, F: Hash> Hash for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         switch_match!(match (this = self) {
             _ => Hash::hash(this, state);
@@ -666,6 +672,7 @@ impl<B: Bool, T: RefUnwindSafe, F: RefUnwindSafe> RefUnwindSafe for SwitchCell<B
 impl<B: Bool, T: Copy, F: Copy> Copy for SwitchCell<B, T, F> where Switch<B, T, F>: Copy {}
 
 impl<B: Bool, T: Clone, F: Clone> Clone for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn clone(&self) -> Self {
         switch_map!(match (this = self) -> (output: Self) {
             _ => this.clone()
@@ -674,6 +681,7 @@ impl<B: Bool, T: Clone, F: Clone> Clone for SwitchCell<B, T, F> {
 }
 
 impl<B: Bool, T: Default, F: Default> Default for SwitchCell<B, T, F> {
+    #[inline(always)]
     fn default() -> Self {
         switch_new!(match -> (output: Self) {
             _ => Default::default();
@@ -682,6 +690,7 @@ impl<B: Bool, T: Default, F: Default> Default for SwitchCell<B, T, F> {
 }
 
 impl<B: Bool, T: Debug + Copy, F: Debug + Copy> Debug for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
             _ => Debug::fmt(this, f);
@@ -690,6 +699,7 @@ impl<B: Bool, T: Debug + Copy, F: Debug + Copy> Debug for SwitchUnion<B, T, F> {
 }
 
 impl<B: Bool, T: Display + Copy, F: Display + Copy> Display for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
             _ => Display::fmt(this, f);
@@ -698,6 +708,7 @@ impl<B: Bool, T: Display + Copy, F: Display + Copy> Display for SwitchUnion<B, T
 }
 
 impl<B: Bool, T: PartialEq + Copy, F: PartialEq + Copy> PartialEq for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
         switch_match!(match (this = self, other) {
             _ => PartialEq::eq(this, other);
@@ -708,6 +719,7 @@ impl<B: Bool, T: PartialEq + Copy, F: PartialEq + Copy> PartialEq for SwitchUnio
 impl<B: Bool, T: Eq + Copy, F: Eq + Copy> Eq for SwitchUnion<B, T, F> {}
 
 impl<B: Bool, T: PartialOrd + Copy, F: PartialOrd + Copy> PartialOrd for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         switch_match!(match (this = self, other) {
             _ => PartialOrd::partial_cmp(this, other);
@@ -716,6 +728,7 @@ impl<B: Bool, T: PartialOrd + Copy, F: PartialOrd + Copy> PartialOrd for SwitchU
 }
 
 impl<B: Bool, T: Ord + Copy, F: Ord + Copy> Ord for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         switch_match!(match (this = self, other) {
             _ => Ord::cmp(this, other);
@@ -724,6 +737,7 @@ impl<B: Bool, T: Ord + Copy, F: Ord + Copy> Ord for SwitchUnion<B, T, F> {
 }
 
 impl<B: Bool, T: Hash + Copy, F: Hash + Copy> Hash for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         switch_match!(match (this = self) {
             _ => Hash::hash(this, state);
@@ -732,10 +746,206 @@ impl<B: Bool, T: Hash + Copy, F: Hash + Copy> Hash for SwitchUnion<B, T, F> {
 }
 
 impl<B: Bool, T: Default + Copy, F: Default + Copy> Default for SwitchUnion<B, T, F> {
+    #[inline(always)]
     fn default() -> Self {
         switch_new!(match -> (output: Self) {
             _ => Default::default();
         })
+    }
+}
+
+impl<B: Bool, T, F> SwitchCell<B, T, F> {
+    /// Gets this as a reference.
+    #[inline(always)]
+    pub fn as_ref(&self) -> SwitchCell<B, &T, &F> {
+        // SAFETY: Is transparent.
+        unsafe { bool_macro_help::transmute_unchecked(self) }
+    }
+
+    /// Gets this as a mutably reference.
+    #[inline(always)]
+    pub fn as_mut(&mut self) -> SwitchCell<B, &mut T, &mut F> {
+        // SAFETY: Is transparent.
+        unsafe { bool_macro_help::transmute_unchecked(self) }
+    }
+
+    /// A sometimes easier version of [`switch_match!`] that uses closures.
+    #[inline(always)]
+    pub fn switch_match<O>(self, on_true: impl FnOnce(T) -> O, on_false: impl FnOnce(F) -> O) -> O {
+        switch_match!(match (this = self) {
+            true => on_true(this);
+            false => on_false(this);
+        })
+    }
+
+    /// A sometimes easier version of [`switch_map!`] that uses closures.
+    #[inline(always)]
+    pub fn switch_map<T2, F2>(
+        self,
+        on_true: impl FnOnce(T) -> T2,
+        on_false: impl FnOnce(F) -> F2,
+    ) -> SwitchCell<B, T2, F2> {
+        switch_map!(match (this = self) -> (out: SwitchCell<B, T2, F2>) {
+            true => on_true(this);
+            false => on_false(this);
+        })
+    }
+
+    /// A sometimes easier version of [`switch_new!`] that uses closures.
+    #[inline(always)]
+    pub fn switch_new(on_true: impl FnOnce() -> T, on_false: impl FnOnce() -> F) -> Self {
+        switch_new!(match -> (out: Self) {
+            true => on_true();
+            false => on_false();
+        })
+    }
+
+    /// A sometimes easier version of [`switch_map!`] that uses closures and options.
+    #[inline(always)]
+    pub fn switch_map_option<T2, F2>(
+        self,
+        on_true: impl FnOnce(T) -> Option<T2>,
+        on_false: impl FnOnce(F) -> Option<F2>,
+    ) -> Option<SwitchCell<B, T2, F2>> {
+        Some(
+            switch_map!(match (this = self) -> (out: SwitchCell<B, T2, F2>) {
+                true => on_true(this)?;
+                false => on_false(this)?;
+            }),
+        )
+    }
+
+    /// A sometimes easier version of [`switch_new!`] that uses closures and options.
+    #[inline(always)]
+    pub fn switch_new_option(
+        on_true: impl FnOnce() -> Option<T>,
+        on_false: impl FnOnce() -> Option<F>,
+    ) -> Option<Self> {
+        Some(switch_new!(match -> (out: Self) {
+            true => on_true()?;
+            false => on_false()?;
+        }))
+    }
+
+    /// A sometimes easier version of [`switch_map!`] that uses closures and result.
+    #[inline(always)]
+    pub fn switch_map_result<T2, F2, E>(
+        self,
+        on_true: impl FnOnce(T) -> Result<T2, E>,
+        on_false: impl FnOnce(F) -> Result<F2, E>,
+    ) -> Result<SwitchCell<B, T2, F2>, E> {
+        Ok(
+            switch_map!(match (this = self) -> (out: SwitchCell<B, T2, F2>) {
+                true => on_true(this)?;
+                false => on_false(this)?;
+            }),
+        )
+    }
+
+    /// A sometimes easier version of [`switch_new!`] that uses closures and result.
+    #[inline(always)]
+    pub fn switch_new_result<E>(
+        on_true: impl FnOnce() -> Result<T, E>,
+        on_false: impl FnOnce() -> Result<F, E>,
+    ) -> Result<Self, E> {
+        Ok(switch_new!(match -> (out: Self) {
+            true => on_true()?;
+            false => on_false()?;
+        }))
+    }
+}
+
+impl<B: Bool, T: Copy, F: Copy> SwitchUnion<B, T, F> {
+    /// Gets this as a reference.
+    #[inline(always)]
+    pub fn as_ref(&self) -> SwitchUnion<B, &T, &F> {
+        // SAFETY: Is transparent.
+        unsafe { bool_macro_help::transmute_unchecked(self) }
+    }
+
+    /// A sometimes easier version of [`switch_match!`] that uses closures.
+    #[inline(always)]
+    pub fn switch_match<O>(self, on_true: impl FnOnce(T) -> O, on_false: impl FnOnce(F) -> O) -> O {
+        switch_match!(match (this = self) {
+            true => on_true(this);
+            false => on_false(this);
+        })
+    }
+
+    /// A sometimes easier version of [`switch_map!`] that uses closures.
+    #[inline(always)]
+    pub fn switch_map<T2: Copy, F2: Copy>(
+        self,
+        on_true: impl FnOnce(T) -> T2,
+        on_false: impl FnOnce(F) -> F2,
+    ) -> SwitchUnion<B, T2, F2> {
+        switch_map!(match (this = self) -> (out: SwitchUnion<B, T2, F2>) {
+            true => on_true(this);
+            false => on_false(this);
+        })
+    }
+
+    /// A sometimes easier version of [`switch_new!`] that uses closures.
+    #[inline(always)]
+    pub fn switch_new(on_true: impl FnOnce() -> T, on_false: impl FnOnce() -> F) -> Self {
+        switch_new!(match -> (out: Self) {
+            true => on_true();
+            false => on_false();
+        })
+    }
+
+    /// A sometimes easier version of [`switch_map!`] that uses closures and options.
+    #[inline(always)]
+    pub fn switch_map_option<T2: Copy, F2: Copy>(
+        self,
+        on_true: impl FnOnce(T) -> Option<T2>,
+        on_false: impl FnOnce(F) -> Option<F2>,
+    ) -> Option<SwitchUnion<B, T2, F2>> {
+        Some(
+            switch_map!(match (this = self) -> (out: SwitchUnion<B, T2, F2>) {
+                true => on_true(this)?;
+                false => on_false(this)?;
+            }),
+        )
+    }
+
+    /// A sometimes easier version of [`switch_new!`] that uses closures and options.
+    #[inline(always)]
+    pub fn switch_new_option(
+        on_true: impl FnOnce() -> Option<T>,
+        on_false: impl FnOnce() -> Option<F>,
+    ) -> Option<Self> {
+        Some(switch_new!(match -> (out: Self) {
+            true => on_true()?;
+            false => on_false()?;
+        }))
+    }
+
+    /// A sometimes easier version of [`switch_map!`] that uses closures and result.
+    #[inline(always)]
+    pub fn switch_map_result<T2: Copy, F2: Copy, E>(
+        self,
+        on_true: impl FnOnce(T) -> Result<T2, E>,
+        on_false: impl FnOnce(F) -> Result<F2, E>,
+    ) -> Result<SwitchUnion<B, T2, F2>, E> {
+        Ok(
+            switch_map!(match (this = self) -> (out: SwitchUnion<B, T2, F2>) {
+                true => on_true(this)?;
+                false => on_false(this)?;
+            }),
+        )
+    }
+
+    /// A sometimes easier version of [`switch_new!`] that uses closures and result.
+    #[inline(always)]
+    pub fn switch_new_result<E>(
+        on_true: impl FnOnce() -> Result<T, E>,
+        on_false: impl FnOnce() -> Result<F, E>,
+    ) -> Result<Self, E> {
+        Ok(switch_new!(match -> (out: Self) {
+            true => on_true()?;
+            false => on_false()?;
+        }))
     }
 }
 
