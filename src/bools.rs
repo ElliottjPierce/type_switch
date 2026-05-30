@@ -653,7 +653,7 @@ impl<B: Bool, T: Hash, F: Hash> Hash for SwitchCell<B, T, F> {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         switch_match!(match (this = self) {
             _ => Hash::hash(this, state);
-        })
+        });
     }
 }
 
@@ -741,7 +741,7 @@ impl<B: Bool, T: Hash + Copy, F: Hash + Copy> Hash for SwitchUnion<B, T, F> {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         switch_match!(match (this = self) {
             _ => Hash::hash(this, state);
-        })
+        });
     }
 }
 
@@ -758,15 +758,29 @@ impl<B: Bool, T, F> SwitchCell<B, T, F> {
     /// Gets this as a reference.
     #[inline(always)]
     pub fn as_ref(&self) -> SwitchCell<B, &T, &F> {
-        // SAFETY: Is transparent.
-        unsafe { bool_macro_help::transmute_unchecked(self) }
+        switch_map!(match (this = self) -> (out: SwitchCell<B, &T, &F>) {
+            _ => this;
+        })
     }
 
     /// Gets this as a mutably reference.
     #[inline(always)]
     pub fn as_mut(&mut self) -> SwitchCell<B, &mut T, &mut F> {
-        // SAFETY: Is transparent.
-        unsafe { bool_macro_help::transmute_unchecked(self) }
+        switch_map!(match (this = self) -> (out: SwitchCell<B, &mut T, &mut F>) {
+            _ => this;
+        })
+    }
+
+    /// Merges `self` and `other` into a tuple.
+    /// See [`switch_map!`] for a more general way of doing this.
+    #[inline(always)]
+    pub fn merge<M: SwitchStorage<Condition = B>>(
+        self,
+        other: M,
+    ) -> SwitchCell<B, (T, M::OnTrue), (F, M::OnFalse)> {
+        switch_map!(match (this = self, other) -> (out: SwitchCell<B, (T, M::OnTrue), (F, M::OnFalse)>) {
+            _ => (this, other);
+        })
     }
 
     /// A sometimes easier version of [`switch_match!`] that uses closures.
@@ -859,8 +873,21 @@ impl<B: Bool, T: Copy, F: Copy> SwitchUnion<B, T, F> {
     /// Gets this as a reference.
     #[inline(always)]
     pub fn as_ref(&self) -> SwitchUnion<B, &T, &F> {
-        // SAFETY: Is transparent.
-        unsafe { bool_macro_help::transmute_unchecked(self) }
+        switch_map!(match (this = self) -> (out: SwitchUnion<B, &T, &F>) {
+            _ => this;
+        })
+    }
+
+    /// Merges `self` and `other` into a tuple.
+    /// See [`switch_map!`] for a more general way of doing this.
+    #[inline(always)]
+    pub fn merge<M: SwitchStorage<Condition = B, OnFalse: Copy, OnTrue: Copy>>(
+        self,
+        other: M,
+    ) -> SwitchUnion<B, (T, M::OnTrue), (F, M::OnFalse)> {
+        switch_map!(match (this = self, other) -> (out: SwitchUnion<B, (T, M::OnTrue), (F, M::OnFalse)>) {
+            _ => (this, other);
+        })
     }
 
     /// A sometimes easier version of [`switch_match!`] that uses closures.
