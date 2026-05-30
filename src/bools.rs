@@ -244,10 +244,21 @@ pub mod bool_macro_help {
     /// The `src` must be transmutable to `Dst`.
     #[inline(always)]
     pub(crate) const unsafe fn transmute_unchecked<Src, Dst>(src: Src) -> Dst {
-        let src = ManuallyDrop::new(src);
-        // SAFETY: Ensured by caller. The `ManuallyDrop` is transparent.
-        // The original `src` is forgotten, so the returned value has ownership.
-        unsafe { core::mem::transmute_copy::<ManuallyDrop<Src>, Dst>(&src) }
+        #[repr(C)]
+        union Transmuter<Src, Dst> {
+            src: ManuallyDrop<Src>,
+            dst: ManuallyDrop<Dst>,
+        }
+        // SAFETY: Caller ensures they are transmutable and union is repr(C).
+        // We can't use `transmute` or `transmute_copy` because we don't know their sizes.
+        // We only know (from the caller) that the bytes of `Src` that overlap with `Dst` are a valid value of `Dst`,
+        // and the remaining bytes of `Dst` may be left uninit for form a valid value.
+        unsafe {
+            let x = Transmuter {
+                src: ManuallyDrop::new(src),
+            };
+            ManuallyDrop::into_inner(x.dst)
+        }
     }
 
     #[inline(always)]
@@ -323,14 +334,16 @@ pub mod bool_macro_help {
 /// # use type_switch::*;
 /// let a = SwitchCell::<True, u32, f32>(5);
 /// let incremented = switch_match!(match (a) {
-///     true => a + 1,
-///     false => (a + 1.0) as u32,
+///     true => a + 1;
+///     false => (a + 1.0) as u32;
 /// });
 /// assert_eq!(incremented, 6);
 /// ```
 ///
 /// Notice that `a` is in parentheses and is the name of the inner `u32` and `f32` in the `true` and `false` cases respectively.
 /// Note also that you can't swap the order of the cases or add match guards or anything.
+/// Also unlike `match`, the expressions must end with `;` instead of `,`, with the exception of the last case, which can be omitted.
+/// This helps `rustfmt` and other tools properly parse the syntax without interfering with `rustc`'s ability to match the macro.
 ///
 /// You can use more than one [`SwitchStorage`]s as long as they share the same condition type.
 /// Optionally, each switch storage variable can be declared inline by following it with an `= *some expression*`.
@@ -340,8 +353,8 @@ pub mod bool_macro_help {
 /// # use type_switch::*;
 /// let a = SwitchCell::<True, u32, f32>(5);
 /// let square = switch_match!(match (l = &a, r = &a) {
-///     true => *l * *r,
-///     false => (*l * *r) as u32,
+///     true => *l * *r;
+///     false => (*l * *r) as u32
 /// });
 /// assert_eq!(square, 25);
 /// ```
@@ -355,8 +368,8 @@ pub mod bool_macro_help {
 ///     let a = SwitchCell::<False, u32, u64>(3);
 ///     let b = SwitchCell::<XOr<B, B>, u32, u64>(4);
 ///     let product = switch_match!(match (a, b) {
-///         true => a * b,
-///         false => (a * b) as u32,
+///         true => a * b;
+///         false => (a * b) as u32
 ///     });
 ///     assert_eq!(product, 12);
 /// }
@@ -382,7 +395,7 @@ pub mod bool_macro_help {
 /// ```
 #[macro_export]
 macro_rules! switch_match {
-    (match ( $first_i:ident  $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? )* $(,)? ) {true => $on_true:expr , false => $on_false:expr $(,)? }) => {
+    (match ( $first_i:ident  $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? )* $(,)? ) {true => $on_true:expr ; false => $on_false:expr $(;)? }) => {
         {
             $(let $first_i = $first_e;)?
             #[allow(unused_assignments)]
@@ -413,8 +426,8 @@ macro_rules! switch_match {
             }
         }
     };
-    (match ( $first_i:ident  $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? $(,)? )* ) { _ => $on_either:expr $(,)?}) => {
-        $crate::switch_match!(match ($first_i $(= $first_e)? $(, $i $(= $e)? )* ) { true => $on_either , false => $on_either })
+    (match ( $first_i:ident  $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? $(,)? )* ) { _ => $on_either:expr $(;)?}) => {
+        $crate::switch_match!(match ($first_i $(= $first_e)? $(, $i $(= $e)? )* ) { true => $on_either ; false => $on_either })
     };
 }
 
@@ -427,8 +440,8 @@ macro_rules! switch_match {
 /// # use type_switch::*;
 /// let a = SwitchCell::<True, u32, f32>(5);
 /// let square = switch_map!(match (a) -> (output: SwitchCell<True, u64, f64>) {
-///     true => (a * a) as u64,
-///     false => (a * a) as f64,
+///     true => (a * a) as u64;
+///     false => (a * a) as f64;
 /// });
 /// assert_eq!(square.0, 25);
 /// ```
@@ -453,7 +466,7 @@ macro_rules! switch_match {
 /// ```
 #[macro_export]
 macro_rules! switch_map {
-    (match ( $first_i:ident $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? )* $(,)? ) -> ( $($o:ident : $t:ty),+ $(,)? ) {true => $on_true:expr , false => $on_false:expr $(,)? }) => {
+    (match ( $first_i:ident $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? )* $(,)? ) -> ( $($o:ident : $t:ty),+ $(,)? ) {true => $on_true:expr ; false => $on_false:expr $(;)? }) => {
         {
             $(let $first_i = $first_e;)?
             #[allow(unused_assignments)]
@@ -498,8 +511,8 @@ macro_rules! switch_map {
             }
         }
     };
-    (match ( $first_i:ident  $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? $(,)? )* ) -> ( $($o:ident : $t:ty),+ $(,)? ) { _ => $on_either:expr $(,)?}) => {
-        $crate::switch_map!(match ($first_i $(= $first_e)? $(, $i $(= $e)? )* ) -> ( $( $o:$t ),+ ) { true => $on_either , false => $on_either })
+    (match ( $first_i:ident  $(= $first_e:expr)? $(, $i:ident $(= $e:expr)? $(,)? )* ) -> ( $($o:ident : $t:ty),+ $(,)? ) { _ => $on_either:expr $(;)?}) => {
+        $crate::switch_map!(match ($first_i $(= $first_e)? $(, $i $(= $e)? )* ) -> ( $( $o:$t ),+ ) { true => $on_either ; false => $on_either })
     };
 }
 
@@ -512,8 +525,8 @@ macro_rules! switch_map {
 /// # use type_switch::*;
 /// let a = 5u32;
 /// let a = switch_new!(match -> (output: SwitchCell<True, u64, f64>) {
-///     true => a as u64,
-///     false => a as f64,
+///     true => a as u64;
+///     false => a as f64;
 /// });
 /// assert_eq!(a.0, 5);
 /// ```
@@ -536,7 +549,7 @@ macro_rules! switch_map {
 /// ```
 #[macro_export]
 macro_rules! switch_new {
-    (match -> ( $first_i:ident : $first_t:ty $(, $i:ident : $t:ty )* $(,)? ) {true => $on_true:expr , false => $on_false:expr $(,)? }) => {
+    (match -> ( $first_i:ident : $first_t:ty $(, $i:ident : $t:ty )* $(,)? ) {true => $on_true:expr ; false => $on_false:expr $(;)? }) => {
         {
             #[allow(unused_mut)]
             #[allow(unused_assignments)]
@@ -572,15 +585,15 @@ macro_rules! switch_new {
             }
         }
     };
-    (match -> ( $first_i:ident : $first_t:ty $(, $i:ident : $t:ty )* $(,)? ) { _ => $on_either:expr $(,)?}) => {
-        $crate::switch_new!(match -> ( $first_i:$first_t $(, $i:$t )* ) { true => $on_either , false => $on_either })
+    (match -> ( $first_i:ident : $first_t:ty $(, $i:ident : $t:ty )* $(,)? ) { _ => $on_either:expr $(;)?}) => {
+        $crate::switch_new!(match -> ( $first_i:$first_t $(, $i:$t )* ) { true => $on_either ; false => $on_either })
     };
 }
 
 impl<B: Bool, T: Debug, F: Debug> Debug for SwitchCell<B, T, F> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
-            _ => Debug::fmt(this, f),
+            _ => Debug::fmt(this, f);
         })
     }
 }
@@ -588,7 +601,7 @@ impl<B: Bool, T: Debug, F: Debug> Debug for SwitchCell<B, T, F> {
 impl<B: Bool, T: Display, F: Display> Display for SwitchCell<B, T, F> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
-            _ => Display::fmt(this, f),
+            _ => Display::fmt(this, f);
         })
     }
 }
@@ -596,7 +609,7 @@ impl<B: Bool, T: Display, F: Display> Display for SwitchCell<B, T, F> {
 impl<B: Bool, T: PartialEq, F: PartialEq> PartialEq for SwitchCell<B, T, F> {
     fn eq(&self, other: &Self) -> bool {
         switch_match!(match (this = self, other) {
-            _ => PartialEq::eq(this, other),
+            _ => PartialEq::eq(this, other);
         })
     }
 }
@@ -606,7 +619,7 @@ impl<B: Bool, T: Eq, F: Eq> Eq for SwitchCell<B, T, F> {}
 impl<B: Bool, T: PartialOrd, F: PartialOrd> PartialOrd for SwitchCell<B, T, F> {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         switch_match!(match (this = self, other) {
-            _ => PartialOrd::partial_cmp(this, other),
+            _ => PartialOrd::partial_cmp(this, other);
         })
     }
 }
@@ -614,7 +627,7 @@ impl<B: Bool, T: PartialOrd, F: PartialOrd> PartialOrd for SwitchCell<B, T, F> {
 impl<B: Bool, T: Ord, F: Ord> Ord for SwitchCell<B, T, F> {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         switch_match!(match (this = self, other) {
-            _ => Ord::cmp(this, other),
+            _ => Ord::cmp(this, other);
         })
     }
 }
@@ -622,7 +635,7 @@ impl<B: Bool, T: Ord, F: Ord> Ord for SwitchCell<B, T, F> {
 impl<B: Bool, T: Hash, F: Hash> Hash for SwitchCell<B, T, F> {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         switch_match!(match (this = self) {
-            _ => Hash::hash(this, state),
+            _ => Hash::hash(this, state);
         })
     }
 }
@@ -652,7 +665,7 @@ impl<B: Bool, T: Clone, F: Clone> Clone for SwitchCell<B, T, F> {
 impl<B: Bool, T: Default, F: Default> Default for SwitchCell<B, T, F> {
     fn default() -> Self {
         switch_new!(match -> (output: Self) {
-            _ => Default::default(),
+            _ => Default::default();
         })
     }
 }
@@ -660,7 +673,7 @@ impl<B: Bool, T: Default, F: Default> Default for SwitchCell<B, T, F> {
 impl<B: Bool, T: Debug + Copy, F: Debug + Copy> Debug for SwitchUnion<B, T, F> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
-            _ => Debug::fmt(this, f),
+            _ => Debug::fmt(this, f);
         })
     }
 }
@@ -668,7 +681,7 @@ impl<B: Bool, T: Debug + Copy, F: Debug + Copy> Debug for SwitchUnion<B, T, F> {
 impl<B: Bool, T: Display + Copy, F: Display + Copy> Display for SwitchUnion<B, T, F> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         switch_match!(match (this = self) {
-            _ => Display::fmt(this, f),
+            _ => Display::fmt(this, f);
         })
     }
 }
@@ -676,7 +689,7 @@ impl<B: Bool, T: Display + Copy, F: Display + Copy> Display for SwitchUnion<B, T
 impl<B: Bool, T: PartialEq + Copy, F: PartialEq + Copy> PartialEq for SwitchUnion<B, T, F> {
     fn eq(&self, other: &Self) -> bool {
         switch_match!(match (this = self, other) {
-            _ => PartialEq::eq(this, other),
+            _ => PartialEq::eq(this, other);
         })
     }
 }
@@ -686,7 +699,7 @@ impl<B: Bool, T: Eq + Copy, F: Eq + Copy> Eq for SwitchUnion<B, T, F> {}
 impl<B: Bool, T: PartialOrd + Copy, F: PartialOrd + Copy> PartialOrd for SwitchUnion<B, T, F> {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         switch_match!(match (this = self, other) {
-            _ => PartialOrd::partial_cmp(this, other),
+            _ => PartialOrd::partial_cmp(this, other);
         })
     }
 }
@@ -694,7 +707,7 @@ impl<B: Bool, T: PartialOrd + Copy, F: PartialOrd + Copy> PartialOrd for SwitchU
 impl<B: Bool, T: Ord + Copy, F: Ord + Copy> Ord for SwitchUnion<B, T, F> {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         switch_match!(match (this = self, other) {
-            _ => Ord::cmp(this, other),
+            _ => Ord::cmp(this, other);
         })
     }
 }
@@ -702,7 +715,7 @@ impl<B: Bool, T: Ord + Copy, F: Ord + Copy> Ord for SwitchUnion<B, T, F> {
 impl<B: Bool, T: Hash + Copy, F: Hash + Copy> Hash for SwitchUnion<B, T, F> {
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         switch_match!(match (this = self) {
-            _ => Hash::hash(this, state),
+            _ => Hash::hash(this, state);
         })
     }
 }
@@ -710,7 +723,98 @@ impl<B: Bool, T: Hash + Copy, F: Hash + Copy> Hash for SwitchUnion<B, T, F> {
 impl<B: Bool, T: Default + Copy, F: Default + Copy> Default for SwitchUnion<B, T, F> {
     fn default() -> Self {
         switch_new!(match -> (output: Self) {
-            _ => Default::default(),
+            _ => Default::default();
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::num::{NonZeroI16, NonZeroU32};
+
+    use crate::*;
+
+    fn lifecycle_union<B: Bool>() {
+        let (a, mut b) = switch_new!(match -> (a: SwitchUnion<B, NonZeroU32, i16>, b: SwitchUnion<B, NonZeroU32, i16>) {
+            true => (NonZeroU32::new(5).unwrap(), NonZeroU32::new(3).unwrap());
+            false => (-2, 7);
+        });
+        let (x, y) = switch_map!(match (a, b = &mut b) -> (x: SwitchUnion<B, u32, NonZeroI16>, y: SwitchUnion<B, u32, NonZeroI16>) {
+            true => {
+                *b = b.saturating_add(1);
+                (a.get() * b.get(), a.get() + b.get())
+            };
+            false => {
+                *b = b.saturating_add(1);
+                (NonZeroI16::new(a * *b).unwrap(), NonZeroI16::new(a + *b).unwrap())
+            };
+        });
+        let truth = switch_match!(match (x, y, b) {
+            true => {
+                assert_eq!(x, 20);
+                assert_eq!(y, 9);
+                assert_eq!(b.get(), 4);
+                true
+            };
+            false => {
+                assert_eq!(x.get(), -16);
+                assert_eq!(y.get(), 6);
+                assert_eq!(b, 8);
+                false
+            }
+        });
+        assert_eq!(truth, B::VALUE);
+    }
+
+    fn lifecycle_cell<B: Bool>() {
+        let (a, mut b) = switch_new!(match -> (a: SwitchCell<B, NonZeroU32, i16>, b: SwitchCell<B, NonZeroU32, i16>) {
+            true => (NonZeroU32::new(5).unwrap(), NonZeroU32::new(3).unwrap());
+            false => (-2, 7);
+        });
+        let (x, y) = switch_map!(match (a, b = &mut b) -> (x: SwitchCell<B, u32, NonZeroI16>, y: SwitchCell<B, u32, NonZeroI16>) {
+            true => {
+                *b = b.saturating_add(1);
+                (a.get() * b.get(), a.get() + b.get())
+            };
+            false => {
+                *b = b.saturating_add(1);
+                (NonZeroI16::new(a * *b).unwrap(), NonZeroI16::new(a + *b).unwrap())
+            };
+        });
+        let truth = switch_match!(match (x, y, b) {
+            true => {
+                assert_eq!(x, 20);
+                assert_eq!(y, 9);
+                assert_eq!(b.get(), 4);
+                true
+            };
+            false => {
+                assert_eq!(x.get(), -16);
+                assert_eq!(y.get(), 6);
+                assert_eq!(b, 8);
+                false
+            }
+        });
+        assert_eq!(truth, B::VALUE);
+    }
+
+    #[test]
+    fn lifecycle_union_true() {
+        lifecycle_union::<True>();
+    }
+
+    #[test]
+    fn lifecycle_union_false() {
+        lifecycle_union::<False>();
+    }
+
+    #[test]
+    fn lifecycle_cell_true() {
+        lifecycle_cell::<True>();
+    }
+
+    #[test]
+    fn lifecycle_cell_false() {
+        lifecycle_cell::<False>();
     }
 }
