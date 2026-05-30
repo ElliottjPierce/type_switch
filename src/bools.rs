@@ -498,6 +498,7 @@ macro_rules! switch_map {
                 )*
                 #[allow(unused_parens)]
                 let ($($o),+) = $on_true;
+                #[allow(unreachable_code)]
                 ($(
                     // SAFETY: Is true. The output type has the same condition as the inputs.
                     unsafe { $crate::bool_macro_help::from_true::<$t>($o) }
@@ -511,6 +512,7 @@ macro_rules! switch_map {
                 )*
                 #[allow(unused_parens)]
                 let ($($o),+) = $on_false;
+                #[allow(unreachable_code)]
                 ($(
                     // SAFETY: Is false. The output type has the same condition as the inputs.
                     unsafe { $crate::bool_macro_help::from_false::<$t>($o) }
@@ -569,6 +571,7 @@ macro_rules! switch_new {
             if condition {
                 #[allow(unused_parens)]
                 let ($first_i $(, $i)*) = $on_true;
+                #[allow(unreachable_code)]
                 (
                     // SAFETY: Is true. The output type has the same condition as the inputs.
                     unsafe { $crate::bool_macro_help::from_true::<$first_t>($first_i) }
@@ -581,6 +584,7 @@ macro_rules! switch_new {
             } else {
                 #[allow(unused_parens)]
                 let ($first_i $(, $i)*) = $on_false;
+                #[allow(unreachable_code)]
                 (
                     // SAFETY: Is false. The output type has the same condition as the inputs.
                     unsafe { $crate::bool_macro_help::from_false::<$first_t>($first_i) }
