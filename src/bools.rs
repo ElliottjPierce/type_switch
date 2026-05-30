@@ -489,6 +489,7 @@ macro_rules! switch_map {
                 { condition = ::core::marker::PhantomData::<<$t as $crate::SwitchStorage>::Condition>; }
             )+
             let condition = $crate::bool_macro_help::condition_marker_value(condition);
+            #[allow(clippy::diverging_sub_expression)]
             if condition {
                 // SAFETY: Is true.
                 let $first_i = unsafe {$crate::bool_macro_help::into_true($first_i)};
@@ -568,6 +569,7 @@ macro_rules! switch_new {
                 { condition = ::core::marker::PhantomData::<<$t as $crate::SwitchStorage>::Condition>; }
             )*
             let condition = $crate::bool_macro_help::condition_marker_value(condition);
+            #[allow(clippy::diverging_sub_expression)]
             if condition {
                 #[allow(unused_parens)]
                 let ($first_i $(, $i)*) = $on_true;
