@@ -8,8 +8,8 @@ keywords = ["types", "switch", "performance"]
 categories = [
   "no-std::no-alloc",
   "no-std",
-  "rust-patterns ",
-  "data-structures ",
+  "rust-patterns",
+  "data-structures",
 ]
 readme = "README.md"
 repository = "https://github.com/ElliottjPierce/type_switch"
