@@ -162,7 +162,7 @@ mod bool_logic_is_correct {
 ///
 /// # Safety
 ///
-/// This type mist be transparent over [`Self::OnTrue`] when [`Self::Condition`] and [`Self::OnFalse`] otherwise.
+/// This type must be transparent over [`Self::OnTrue`] when [`Self::Condition`] and [`Self::OnFalse`] otherwise.
 /// For example, when true, it must be safe to transmute between [`Self::OnTrue`] and `Self`, and between `&'a Self::OnTrue` and `&'a Self`, etc.
 pub unsafe trait SwitchStorage: Sized {
     /// The type this stores when true.
@@ -173,12 +173,14 @@ pub unsafe trait SwitchStorage: Sized {
     type Condition: Bool;
 
     /// Creates a new value of this [`Switch`].
+    #[inline(always)]
     fn new(value: Switch<Self::Condition, Self::OnTrue, Self::OnFalse>) -> Self {
         // SAFETY: Ensured by implementer.
         unsafe { bool_macro_help::transmute_unchecked(value) }
     }
 
     /// Gets the inner [`Switch`] value.
+    #[inline(always)]
     fn into_inner(self) -> Switch<Self::Condition, Self::OnTrue, Self::OnFalse> {
         // SAFETY: Ensured by implementer.
         unsafe { bool_macro_help::transmute_unchecked(self) }
@@ -219,7 +221,7 @@ unsafe impl<B: Bool, T, F> SwitchStorage for SwitchCell<B, T, F> {
 ///
 /// That means if `T` is a `u32` and `F` is a `u128`, and `B` is [`True`], the size of this is still 16 bytes!
 /// The advantage is that the compiler can see that this is only ever `T` or `F`, so it has no trouble with auto traits.
-/// For example, if `T` and `F` both implement [`Copy`], this does too.
+/// For example, because `T` and `F` both implement [`Copy`], this does too.
 /// See also [`SwitchCell`], which has the opposite trade offs.
 #[repr(C)]
 #[derive(Clone, Copy)]

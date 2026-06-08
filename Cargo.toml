@@ -2,12 +2,26 @@
 name = "type_switch"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.96"
+license = "MIT OR Apache-2.0"
+keywords = ["types", "switch", "performance"]
+categories = [
+  "no-std::no-alloc",
+  "no-std",
+  "rust-patterns ",
+  "data-structures ",
+]
+readme = "README.md"
+repository = "https://github.com/ElliottjPierce/type_switch"
+homepage = "https://github.com/ElliottjPierce/type_switch"
+documentation = "https://docs.rs/type_switch"
+authors = ["Elliott Pierce"]
+description = "A simple utility for compile-time unions that let you switch between different types."
 
 [dependencies]
 
 [dev-dependencies]
 static_assertions = { version = "1.1" }
-
 
 [lints.clippy]
 doc_markdown = "warn"
